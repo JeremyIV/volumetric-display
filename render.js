@@ -35,21 +35,21 @@ const color_data_buffer = gl.createBuffer();
 
 const center_positions = [];
 const relative_corner_positions = [];
-const color_data = [];
+let color_data = [];
 
-num_rows = 16;
-num_cols = 19;
-num_levs = 10;
+num_rows = 19;
+num_cols = 22;
+num_levs = 16;
 
 num_verts = num_rows * num_cols * num_levs * 3;
 
 // TODO: max length of 1 in largest dimension
-const SPHERE_RADIUS = 0.01;
+const SPHERE_RADIUS = 0.005;
 row_size = 1;
 grid_size = row_size / 19;
 start_row_position = -row_size / 2.0;
 start_col_position = (-(row_size / 2.0) * num_cols) / num_rows;
-start_lev_position = -(row_size * num_levs) / num_rows;
+start_lev_position = -((row_size / 2.0) * num_levs) / num_rows;
 
 for (let row = 0; row < num_rows; row++) {
   for (let col = 0; col < num_cols; col++) {
@@ -223,6 +223,99 @@ canvas.addEventListener(
   { passive: false }
 );
 
+/////////////////////////////////////////////////
+// PINCH/ZOOM
+
+let distance = 2.0; // Initial value of distance
+
+function updateDistanceOnScroll(event) {
+  // Check the direction of the scroll (up or down)
+  const scrollDirection = Math.sign(event.deltaY);
+
+  // Increase or decrease distance based on scroll direction
+  distance += scrollDirection * 0.2; // Adjust the 0.1 step size as needed
+
+  // Log the updated distance value
+  console.log("Distance:", distance);
+  drawScene();
+}
+
+// Add the event listener for the wheel event
+canvas.addEventListener("wheel", updateDistanceOnScroll);
+
+let initialPinchDistance = null; // Store the initial pinch distance
+
+// Calculate the distance between two touch points
+function getPinchDistance(touches) {
+  const touch1 = touches[0];
+  const touch2 = touches[1];
+  const dx = touch1.pageX - touch2.pageX;
+  const dy = touch1.pageY - touch2.pageY;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+// Function to handle touch move events
+function onPinchZoom(event) {
+  if (event.touches.length === 2) {
+    // Ensure two fingers are used
+    const currentPinchDistance = getPinchDistance(event.touches);
+
+    if (initialPinchDistance == null) {
+      initialPinchDistance = currentPinchDistance;
+    } else {
+      const pinchChange = currentPinchDistance - initialPinchDistance;
+      distance += pinchChange * 0.01; // Adjust the 0.01 step size as needed
+      initialPinchDistance = currentPinchDistance; // Update the initial distance for the next move
+
+      // Log the updated distance value
+      console.log("Distance:", distance);
+    }
+  }
+}
+
+// Reset initialPinchDistance when touch ends
+function onPinchEnd() {
+  initialPinchDistance = null;
+}
+
+// Add the event listeners for touch events
+window.addEventListener("touchmove", onPinchZoom);
+window.addEventListener("touchend", onPinchEnd);
+window.addEventListener("touchcancel", onPinchEnd);
+
+////////////////////////////////////////////////
+// UPDATE COLORS
+
+function callAtFrequency(frequency, callback) {
+  // Calculate the interval in milliseconds for the given frequency
+  const interval = 1000 / frequency;
+
+  // Use setInterval to call the callback function at the calculated interval
+  const intervalId = setInterval(callback, interval);
+
+  // Return a function to stop the interval
+  return function stop() {
+    clearInterval(intervalId);
+  };
+}
+
+function update_colors() {
+  console.log();
+  for (let index = 0; index < color_data.length; index++) {
+    color_data[index] += (0.1 * index) / color_data.length;
+    if (color_data[index] > 1) {
+      color_data[index] = 0;
+    }
+  }
+  gl.bindBuffer(gl.ARRAY_BUFFER, color_data_buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(color_data), gl.STATIC_DRAW);
+  drawScene();
+}
+
+// Example usage:
+const frequency = 24; // Call the function 10 times per second
+const stopCalling = callAtFrequency(frequency, update_colors);
+
 ////////////////////////////////////////////////
 // DRAW FUNCTION
 
@@ -241,7 +334,7 @@ function drawScene() {
 
   // Create a translation matrix
   var translationMatrix = mat4.create(); // Initialize a new matrix
-  mat4.translate(translationMatrix, translationMatrix, [0, 0, -3]);
+  mat4.translate(translationMatrix, translationMatrix, [0, 0, -distance]);
 
   // Combine the translation with the perspective projection
   // Note: It's important that the multiplication order is "projectionMatrix = translationMatrix * projectionMatrix"
@@ -311,8 +404,8 @@ function createProgram(gl, vertexShader, fragmentShader) {
 }
 
 function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  canvas.width = window.innerWidth - 20; // TODO: -20 is a hack to stop scroll bars from appearing
+  canvas.height = window.innerHeight - 20;
 
   gl.viewport(0, 0, canvas.width, canvas.height);
 
