@@ -10,14 +10,13 @@ const vertexShaderSource = `#version 300 es
     out vec2 vTexCoord;
     out float vDepth;
 
-    uniform mat4 uProjectionMatrix; 
-    uniform mat4 uOffsetRotationMatrix;
+    uniform mat4 uPositionTransformationMatrix;
+    uniform mat4 uProjectionMatrix;
 
     void main() {
         vec4 offset = vec4(aOffset, 0.0, 0.0);
-        offset = uOffsetRotationMatrix * offset;
-        vec4 position = vec4(aPosition, 1.0) + offset;
-        position = uProjectionMatrix * position;
+        vec4 position = vec4(aPosition, 1.0);
+        position = uProjectionMatrix * (uPositionTransformationMatrix * position + offset);
         
         gl_Position = position;
         vColor = vec4(aColor, 1.0);
