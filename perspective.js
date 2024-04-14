@@ -146,7 +146,7 @@ function onPinchZoom(event) {
       initialPinchDistance = currentPinchDistance; // Update the initial distance for the next move
 
       // Log the updated distance value
-      console.log("Distance:", distance);
+      //console.log("Distance:", distance);
     }
   }
 }

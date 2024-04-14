@@ -15,6 +15,8 @@ function callAtFrequency(frequency, callback) {
   };
 }
 
+// The returned context always contains an attribute "color_array"
+// color_array is of shape N,3, where N is the # of lights
 function calculate_colors(context) {
   let index = 0;
   let color_array = [];
@@ -38,17 +40,15 @@ function calculate_colors(context) {
   }
   let new_context = { color_array: color_array };
 
-  return [new_context, color_array];
+  return new_context;
 }
 
 //color_array is per-triangle
 //color_data is per-vertex
 function update_colors() {
-  console.log();
-  result = calculate_colors(context);
-  context = result[0];
-
-  color_array = result[1]; //array of shape n,3
+  //console.log();
+  context = update_sandpiles(context); //calculate_colors(context);
+  color_array = context.color_array; //array of shape n,3
   let color_data = []; //array of shape n*3*3
   for (let i = 0; i < color_array.length; i++) {
     for (let j = 0; j < 3; j++) {
@@ -59,7 +59,7 @@ function update_colors() {
       }
     }
   }
-  console.log(color_data);
+  //console.log(color_data);
   gl.bindBuffer(gl.ARRAY_BUFFER, color_data_buffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(color_data), gl.STATIC_DRAW);
   drawScene();
