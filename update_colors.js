@@ -45,7 +45,7 @@ function calculate_colors(context) {
 
 //color_array is per-triangle
 //color_data is per-vertex
-update_rule = get_update_automata(sandpile_next_cell, sandpile_next_cell);
+update_rule = get_update_automata(RPS_init_context, RPS_next_cell);
 function update_colors() {
   //console.log();
   context = update_rule(context); //calculate_colors(context);
