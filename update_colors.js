@@ -45,9 +45,11 @@ function calculate_colors(context) {
 
 //color_array is per-triangle
 //color_data is per-vertex
+update_rule = get_update_automata(sandpile_next_cell, sandpile_next_cell);
 function update_colors() {
   //console.log();
-  context = update_sandpiles(context); //calculate_colors(context);
+  context = update_rule(context); //calculate_colors(context);
+  //console.log(context);
   color_array = context.color_array; //array of shape n,3
   let color_data = []; //array of shape n*3*3
   for (let i = 0; i < color_array.length; i++) {
@@ -66,5 +68,5 @@ function update_colors() {
 }
 
 // Example usage:
-const frequency = 24; // Call the function 24 times per second
+const frequency = 20; // Call the function 24 times per second
 const stopCalling = callAtFrequency(frequency, update_colors);
